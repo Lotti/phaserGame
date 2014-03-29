@@ -1,12 +1,15 @@
 var debug = true;
 var gameDiv = "game";
 var mummy;
+var blocks = [];
+var rocks = [];
 var fps;
 var message;
 var points;
 var started = false;
 var press = false;
 var gameover = false;
+var jumpTimer = 0;
 
 var gameWidth = parseInt(document.getElementById(gameDiv).offsetWidth);
 var gameHeight = parseInt(document.getElementById(gameDiv).offsetHeight);
@@ -56,34 +59,30 @@ var PreloadState = {
 
 var GameState = {
 	create: function() {
-		press = false;
-		
-		tilesprite = game.add.tileSprite(0, 0, game.world.width, game.world.height, 'soil');
-		
-		//if (debug) {
-			game.time.advancedTiming = true;
-			fps = game.add.text(2.5, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
-			fps.update = function () {
-				fps.setText(game.time.fps+' fps');
-			}
-		//}
-		
-		message = game.add.text(game.world.width*.3, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
-		
-		points = game.add.text(game.world.width-5, 2.5, '0 points', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
-		points.p = 0;
-		points.update = function () {
-			points.pivot.x = points.width;
-			points.pivot.y = 0;		
-			points.setText(points.p+' points');
-		}		
-
-		
+		press = false;		
 		
 		game.physics.startSystem(Phaser.Physics.ARCADE);
 		game.physics.arcade.gravity.y = 250;
-
 		
+		tilesprite = game.add.tileSprite(0, 0, game.world.width, game.world.height, 'soil');
+		
+		borders = game.add.group();
+		borders.name = "borders";
+		for(var i = 0; i<15; i++) {
+			var y;
+			if (blocks.length == 0) {
+				y = 0;
+			}
+			else {
+				y = blocks[blocks.length-1].height;
+			}
+			
+			blocks[blocks.length] = borders.create(0, y*i, 'block');
+			blocks[blocks.length-1].immovable = true;
+			
+			blocks[blocks.length] = borders.create(game.world.width - blocks[blocks.length-1].width, y*i, 'block');
+			blocks[blocks.length-1].immovable = true;			
+		}
 		
 		mummy = game.add.sprite(0, 0, 'mummy');
     	game.physics.arcade.enable(mummy);
@@ -98,13 +97,13 @@ var GameState = {
 
 		game.camera.follow(mummy);		
 		
-		rock = game.add.sprite(100,0, 'rock');
-		game.physics.arcade.enable(rock);
-		rock.anchor.setTo(0.5,0.5);
-		rock.scale.setTo(1.5,1.5);
-		rock.body.setSize(16,16,0,0);
-		rock.body.bounce.y = 0.2;
-		rock.body.collideWorldBounds = true;
+		rocks[rocks.length] = game.add.sprite(100,0, 'rock');
+		game.physics.arcade.enable(rocks[rocks.length-1]);
+		rocks[rocks.length-1].anchor.setTo(0.5,0.5);
+		rocks[rocks.length-1].scale.setTo(1.5,1.5);
+		rocks[rocks.length-1].body.setSize(16,16,0,0);
+		rocks[rocks.length-1].body.bounce.y = 0.2;
+		rocks[rocks.length-1].body.collideWorldBounds = true;
 		
 		
 		/*
@@ -120,7 +119,6 @@ var GameState = {
 		circle.body.setCircle(circle.width * .5);
 		circle.body.mass = 1;
 		circle.body.setCollisionGroup(circleCG);
-		circle.body.data.motionState = 2; //circle.body.static = true;
 		circle.body.collideWorldBounds = true;
 		
 		//dots
@@ -158,7 +156,6 @@ var GameState = {
 				dot.body.mass = 100;
 				dot.body.allowSleep = true;
 				dot.body.setCollisionGroup(dotCG);				
-				dot.body.data.motionState = 2; //dot.body.static = true;
 				dot.body.collides(circleCG); //now it works!
 			}
 		}
@@ -199,7 +196,6 @@ var GameState = {
 			basket.body.mass = 100;
 			basket.body.allowSleep = true;
 			basket.body.setCollisionGroup(basketCG);
-			basket.body.data.motionState = 2; //basket.body.static = true;
 			basket.body.collides(circleCG);
 		}
 
@@ -234,10 +230,28 @@ var GameState = {
 			}
 		});
 		*/
+		
+		//if (debug) {
+			game.time.advancedTiming = true;
+			fps = game.add.text(blocks[blocks.length-1].width+5, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
+			fps.update = function () {
+				fps.setText(game.time.fps+' fps');
+			}
+		//}
+		
+		message = game.add.text(game.world.width*.3, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
+		
+		points = game.add.text(game.world.width-blocks[blocks.length-1].width-5, 2.5, '0 points', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
+		points.p = 0;
+		points.update = function () {
+			points.pivot.x = points.width;
+			points.pivot.y = 0;		
+			points.setText(points.p+' points');
+		}		
 	},
 	update: function() {
-		/*
 		var speed = 7.5;
+		var jumpSpeed = 7.5;
 		var circlePressed = false;
 
 		if (gameover) {
@@ -246,53 +260,61 @@ var GameState = {
 			}
 		}
 		else {
-			if (circle.body.data.motionState == 2) {
+			if (game.input.keyboard.isDown(Phaser.Keyboard.CONTROL) && mummy.body.onFloor() && game.time.now > jumpTimer) {
+				mummy.body.velocity.y-= jumpSpeed;
+				jumpTimer = game.time.now + 750;
+			}
+			else if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+				mummy.body.velocity.x-= speed;
+			}
+			else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+				mummy.body.velocity.x+= speed;
+			}
+
+			if (mummy.body.x < 0 + blocks[blocks.length-1].width) {
+				mummy.body.velocity.x = 0;
+				mummy.body.x = blocks[blocks.length-1].width;
+			} 
+			else if (mummy.body.x > game.world.width - mummy.body.width - blocks[blocks.length-1].width) {
+				mummy.body.velocity.x = 0;
+				mummy.body.x = game.world.width - mummy.body.width - blocks[blocks.length-1].width;
+			}	
+
+			if (mummy.body.immovable == true) {
 				if (game.input.activePointer.isUp) {
 					circlePressed = false;
 					press = false;
 				}
-
-				if (game.input.activePointer.isDown) {
-					if (!press && game.input.activePointer.positionDown.x > circle.position.x-circle.width*.5 
-						&& game.input.activePointer.positionDown.x < circle.position.x+circle.width*.5
-						&& game.input.activePointer.positionDown.y > circle.position.y-circle.height*.5
-						&& game.input.activePointer.positionDown.y < circle.position.y+circle.height*.5) {
-						circlePressed = true;
-					}
-
-					press = true;
-
-					if (circlePressed) {
-						circle.body.data.motionState = 1;
-					}
-					else {
-						circle.body.x = game.input.activePointer.worldX;
-					}
-				}
-				else if (game.input.keyboard.isDown(Phaser.Keyboard.CONTROL)) {
-					circle.body.data.motionState = 1;
-				}
-				else if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-					circle.body.x-= speed;
-				}
-				else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
-					circle.body.x+= speed;
-				}
-
-				if (circle.body.x < 0 + circle.width * 0.5) {
-					circle.body.x = circle.width * 0.5;
-				} 
-				else if (circle.body.x > game.world.width - circle.width * 0.5) {
-					circle.body.x = game.world.width - circle.width * 0.5;
-				}
 			}
+		}
+
+		/*
+		if (game.input.activePointer.isDown) {
+			if (!press && game.input.activePointer.positionDown.x > circle.position.x-circle.width*.5 
+				&& game.input.activePointer.positionDown.x < circle.position.x+circle.width*.5
+				&& game.input.activePointer.positionDown.y > circle.position.y-circle.height*.5
+				&& game.input.activePointer.positionDown.y < circle.position.y+circle.height*.5) {
+				circlePressed = true;
+			}
+
+			press = true;
+
+			if (circlePressed) {
+				circle.body.motionState = Phaser.Physics.ARCADE.Body.DYNAMIC;
+			}
+			else {
+				circle.body.x = game.input.activePointer.worldX;
+			}
+		}
+		else if (game.input.keyboard.isDown(Phaser.Keyboard.CONTROL)) {
+			circle.body.motionState = 1;
 		}
 		*/
 	},
 	render: function() {
 		if (debug) {
 			game.debug.body(mummy);
-			game.debug.body(rock);
+			game.debug.body(rocks[rocks.length-1]);
 		}
 	},	
 	restart: function() {
