@@ -10,6 +10,10 @@ var jumpTimer = 0;
 var jumpPressed = false;
 var lastRandomLevel;
 
+var gems;
+var platforms;
+var rocks;
+
 var gameDiv = "game";
 var gameWidth = parseInt(document.getElementById(gameDiv).offsetWidth);
 var gameHeight = parseInt(document.getElementById(gameDiv).offsetHeight);
@@ -58,6 +62,10 @@ var GameState = {
 				
 		background = game.add.tileSprite(0, 0, game.world.width, game.world.height, 'soil');
 		background.fixedToCamera = true;
+		
+		gems = game.add.group();
+		platforms = game.add.group();
+		rocks = game.add.group();		
 				
 		mummy = game.add.sprite(0, game.world.height - block.height*6, 'mummy');
 		mummy.name = 'mummy';

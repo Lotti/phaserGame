@@ -1,6 +1,3 @@
-var gems = game.add.group();
-var platforms = game.add.group();
-var rocks = null;
 var platformData = [
 	[
 		[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -81,9 +78,6 @@ function drawPlatform(game, block, platformData, y) {
 				b.body.immovable = true;	
 		
 				if (platformData[i][jj] == 1 && (i-1 >= 0 && platformData[i-1][jj] == 0) && game.rnd.integerInRange(0,10) % 4 == 0) {
-					if (gems == null) {
-						gems = game.add.group();
-					}
 					var g = gems.create(x+j*block.width+block.width*0.5, y+i*block.height, "gem");
 					g.name = "gem";
 					g.alive = true;
