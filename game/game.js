@@ -19,7 +19,7 @@ var gameDiv = "game";
 var gameWidth = parseInt(document.getElementById(gameDiv).offsetWidth);
 var gameHeight = parseInt(document.getElementById(gameDiv).offsetHeight);
 
-var game = new Phaser.Game(gameWidth, gameHeight, debug ? Phaser.CANVAS : Phaser.AUTO, gameDiv);
+var game = new Phaser.Game(gameWidth, gameHeight, debug ? Phaser.CANVAS : Phaser.AUTO, gameDiv, null, false, false);
 
 var BootState = {
     preload: function() {
@@ -212,14 +212,30 @@ var GameState = {
 					console.log("rock or other undefined");
 				}
 			});
+            
+            var clickOnLeft = false;
+            var clickOnRight = false;
+            var clickOnTop = false;
+            if (game.input.activePointer.isDown) {
+                if (game.input.activePointer.x < game.width*0.5) {
+                    clickOnLeft = true;
+                }
+                else if (game.input.activePointer.x > game.width*0.5) {
+                    clickOnRight = true;
+                }
+
+                if (game.input.activePointer.y < game.height*0.5) {
+                    clickOnTop = true;
+                }
+            }
 							
-			if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+			if (clickOnLeft || game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
 				mummy.animations.play("walk",mummy.animationSpeed);
 				mummy.scale.x = -Math.abs(mummy.scale.x);
 				
 				mummy.body.velocity.x-= mummy.walkSpeed;
 			}
-			else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+			else if (clickOnRight || game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
 				mummy.animations.play("walk",mummy.animationSpeed);
 				mummy.scale.x = Math.abs(mummy.scale.x);
 				
@@ -231,7 +247,7 @@ var GameState = {
 				mummy.frame = 15;
 			}
 			
-			if (!jumpPressed && game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR) && mummy.body.touching.down) {
+			if (!jumpPressed && (clickOnTop || game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) && mummy.body.touching.down) {
 				jumpPressed = true;
 				mummy.body.velocity.y-= mummy.jumpSpeed;
 			}
@@ -239,7 +255,7 @@ var GameState = {
 			if (!game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
 				jumpPressed = false;
 			}			
-			
+
 			//load next platforms!
 			if (mummy.body.y+mummy.body.height > game.world.height - block.height*7) {
 				var rnd;
