@@ -50,7 +50,7 @@ var platformData = [
 	],
 ];
 	
-function drawPlatform(game, block, platformData, y) {
+function drawPlatform(game, block, platformData, y) {	
 	if (!platforms.enableBody) {
 		platforms.enableBody = true;
 		platforms.physicsBodyType = Phaser.Physics.ARCADE;
@@ -108,13 +108,13 @@ function drawRocks(game, block) {
 		lastP[p] = 1;
 		r = rocks.create(p*block.width-18, game.camera.y - block.height, "rock");
 		r.name = "rock";
-		r.lifes = 2;
+		r.lifes = 3;
 		r.anchor.setTo(0.5,0.5);
 		r.scale.setTo(1.5,1.5);
 		r.body.drag.setTo(0.5,0.5);
 		r.body.angularDrag = 0.5;
 		r.body.setSize(16,16,0,0);
-		r.body.bounce.setTo(0.2, 0.2);
+		r.body.bounce.setTo(0.5, 0.5);
 		r.body.angularVelocity = 250;
 		r.body.velocity.x = game.rnd.integerInRange(-150,150);
 		r.body.collideWorldBounds = true;

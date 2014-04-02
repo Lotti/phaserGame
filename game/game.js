@@ -5,6 +5,7 @@ var background;
 var fps;
 var message;
 var points;
+var started = debug;
 var gameover = false;
 var jumpTimer = 0;
 var jumpPressed = false;
@@ -41,6 +42,7 @@ var PreloadState = {
 		game.load.spritesheet('mummy', 'res/sprites/mummy.gif', 37, 45, 18);
 		game.load.image('gem', 'res/sprites/gem.gif');
 		game.load.image('rock', 'res/sprites/rock.gif');
+		game.load.image('dot', 'res/sprites/dot.gif');
 		game.load.image('soil', 'res/sprites/soil.gif');
 		game.load.image('halfBlock', 'res/sprites/halfBlock.gif');
 		game.load.image('block', 'res/sprites/block.gif');
@@ -138,7 +140,7 @@ var GameState = {
 			});
 			
 			if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
-				this.restat();
+				this.restart();
 			}
 		}
 		else {
@@ -149,8 +151,8 @@ var GameState = {
 			//gem "no-physics" collision
 			if (gems != null) {
 				gems.forEach(function(e) {
-					if (e != undefined && Phaser.Rectangle.intersects(mummy.getBounds(), e.getBounds())) {
-						e.destroy();
+					if (e != undefined && e.exists && Phaser.Rectangle.intersects(mummy.getBounds(), e.getBounds())) {
+						e.kill();
 						points.p+=5;
 					}
 				});
@@ -158,41 +160,65 @@ var GameState = {
 			
 			//mummy collisions
 			game.physics.arcade.collide(mummy, [platforms, rocks], function(mummy, o) {
-				if (o.name == "gem") {
-					points.p+=5;
-					o.destroy();
-				}
-				else if (o.name == "rock") {
-					if (!mummy.hit) {
-						mummy.lifes--;
-						if (mummy.lifes > 0) {
-							mummy.hit = 1;
-							game.time.events.repeat(Phaser.Timer.SECOND * 0.15, 10, function() {
-								mummy.visible = !mummy.visible;
-								mummy.hit++;
-								if (mummy.hit > 10) {
-									mummy.hit = 0;
-									mummy.visible = true;
-								}
-							}, this);
+				if (mummy != undefined && o != undefined) {
+					if (o.name == "rock") {
+						if (!mummy.hit) {
+							mummy.lifes--;
+							if (mummy.lifes > 0) {
+								mummy.hit = 1;
+								game.time.events.repeat(Phaser.Timer.SECOND * 0.15, 10, function() {
+									mummy.visible = !mummy.visible;
+									mummy.hit++;
+									if (mummy.hit > 10) {
+										mummy.hit = 0;
+										mummy.visible = true;
+									}
+								}, this);
+							}
 						}
 					}
 				}
+				else {
+					console.log("mummy or other undefined");
+				}				
 			});
 			
 			//rocks collisions
 			game.physics.arcade.collide(rocks, [gems,platforms,rocks], function(rock, o) {
-				if (o.name == "gem") {
-					o.destroy();
-				}
-				else if (o.name == "block") {
-					o.lifes--;
-					if (o.lifes == 1) {
-						o.loadTexture("halfBlock",0);
+				if (rock != undefined && o != undefined) {
+					if (o.name == "gem") {
+						o.kill();
 					}
-					else if (o.lifes == 0) {
-						o.destroy();
-					}					
+					else if (o.name == "block") {
+						if (rock.particles == undefined) {
+							rock.particles = game.add.emitter(0, 0, 100);
+							rock.particles.makeParticles('dot');
+    						rock.particles.gravity = 250;
+						}
+						
+						rock.particles.x = rock.x;
+    					rock.particles.y = rock.y;
+						rock.particles.start(true, 2000, null, 4);
+						
+						rock.lifes--;
+						o.lifes--;
+
+						rock.scale.setTo(r.scale.x*0.8,r.scale.y*0.8);
+
+						if (rock.lifes == 0) {
+							rock.kill();
+						}
+
+						if (o.lifes == 1) {
+							o.loadTexture("halfBlock",0);
+						}
+						else if (o.lifes == 0) {
+							o.kill();
+						}					
+					}
+				}
+				else {
+					console.log("rock or other undefined");
 				}
 			});
 							
@@ -225,8 +251,6 @@ var GameState = {
 			
 			//load next platforms!
 			if (mummy.body.y+mummy.body.height > game.world.height - block.height*7) {
-				points.p++;
-				
 				var rnd;
 				do {
 					rnd = game.rnd.integerInRange(0,platformData.length-1);
@@ -235,40 +259,63 @@ var GameState = {
 				lastRandomLevel = rnd;
 				
 				drawPlatform(game, block, platformData[lastRandomLevel]);
-				drawRocks(game, block);
+				if (started) {
+					points.p++;
+					drawRocks(game, block);
+				}
 				game.world.setBounds(0,0,game.world.width, game.world.height+block.height*7);
+				started = true;
+				
+				this.cleanUp();
 			}
 		}
 	},
-	render: function() {
-		if (debug) {
-			game.debug.body(mummy);
-			gems.forEach(function(e) {
-				game.debug.body(e);
-			});
-			rocks.forEach(function(e) {
-				game.debug.body(e);
-			});
-			platforms.forEach(function (e) {
-				game.debug.body(e);
-			});				
-		}
-				
+	cleanUp: function() {
 		//cleaning routines (remove lower rocks)
-		rocks.forEach(function(e) {
+		rocks.forEachExists(function(e) {
 			if (e != undefined && !e.inCamera && e.y+block.height > game.camera.y + game.camera.height) {
-				e.destroy();
+				e.kill();
 			}
 		});
 
 		//cleaning routines (remove upper platforms)
-		platforms.forEach(function (e) {
+		platforms.forEachExists(function (e) {
 			if (e != undefined && !e.inCamera && e.y+block.height < game.camera.y*1.5) {
-				e.destroy();
+				e.kill();
 			}
-		});					
+		});
+		
+		gems.forEach(function(e) {
+			if (e != undefined) {
+				if (!e.exists) {
+					gems.remove(e);
+					e.destroy();
+				}
+			}
+		});
+		rocks.forEach(function(e) {
+			if (e != undefined) {
+				if (!e.exists) {
+					
+					if (e.particles != undefined) {
+						e.particles.destroy();
+					}
+					rocks.remove(e);
+					e.destroy();
+				}
+			}
+		});
+		platforms.forEach(function (e) {
+			if (e != undefined) {
+				if (!e.exists) {
+					platforms.remove(e);
+					e.destroy();
+				}
+			}
+		});			
 	},	
 	restart: function() {
+		started = false;
 		gameover = false;		
 		jumpTimer = 0;
 		jumpPressed = false;
