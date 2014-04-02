@@ -44,7 +44,6 @@ var PreloadState = {
 		game.load.image('rock', 'res/sprites/rock.gif');
 		game.load.image('dot', 'res/sprites/dot.gif');
 		game.load.image('soil', 'res/sprites/soil.gif');
-		game.load.image('halfBlock', 'res/sprites/halfBlock.gif');
 		game.load.image('block', 'res/sprites/block.gif');
 	},
 	create: function() {
@@ -190,31 +189,23 @@ var GameState = {
 						o.kill();
 					}
 					else if (o.name == "block") {
+                        o.kill();
+                        
 						if (rock.particles == undefined) {
 							rock.particles = game.add.emitter(0, 0, 100);
 							rock.particles.makeParticles('dot');
-    						rock.particles.gravity = 250;
+                            //rock.particles.scale.setTo(0.25,0.25);
+                            rock.particles.gravity = 250;
 						}
 						
 						rock.particles.x = rock.x;
     					rock.particles.y = rock.y;
 						rock.particles.start(true, 2000, null, 4);
-						
-						rock.lifes--;
-						o.lifes--;
-
 						rock.scale.setTo(r.scale.x*0.8,r.scale.y*0.8);
-
+                        rock.lifes--;
 						if (rock.lifes == 0) {
 							rock.kill();
 						}
-
-						if (o.lifes == 1) {
-							o.loadTexture("halfBlock",0);
-						}
-						else if (o.lifes == 0) {
-							o.kill();
-						}					
 					}
 				}
 				else {

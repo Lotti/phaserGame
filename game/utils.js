@@ -73,7 +73,6 @@ function drawPlatform(game, block, platformData, y) {
 			if (platformData[i][jj]) {
 				var b = platforms.create(x+j*block.width, y+i*block.height, "block");
 				b.name = "block";
-				b.lifes = 2;
 				b.body.allowGravity = false;
 				b.body.immovable = true;	
 		
