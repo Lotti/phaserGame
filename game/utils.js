@@ -74,7 +74,8 @@ function drawPlatform(game, block, platformData, y) {
 				var b = platforms.create(x+j*block.width, y+i*block.height, "block");
 				b.name = "block";
 				b.body.allowGravity = false;
-				b.body.immovable = true;	
+				b.body.immovable = true;
+                b.body.mass = 100;
 		
 				if (platformData[i][jj] == 1 && (i-1 >= 0 && platformData[i-1][jj] == 0) && game.rnd.integerInRange(0,10) % 4 == 0) {
 					var g = gems.create(x+j*block.width+block.width*0.5, y+i*block.height, "gem");
