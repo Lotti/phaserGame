@@ -76,15 +76,15 @@ var GameState = {
 		mummy.animationSpeed = 15;
 		mummy.walkSpeed = 5;
 		mummy.jumpSpeed = 150;
-		
+		mummy.animations.add('walk');
+        
     	game.physics.arcade.enable(mummy);
 		mummy.scale.setTo(1,1);
 		mummy.anchor.setTo(.5,.5);
-		mummy.body.bounce.y = 0.05;
+        mummy.body.bounce.y = 0.05;
 		mummy.body.setSize(mummy.width*0.5,mummy.height,0,0);
 		mummy.body.collideWorldBounds = true;
-		mummy.animations.add('walk');
-		mummy.body.drag.set(1,1);
+		mummy.body.drag.setTo(1,1);
 		mummy.body.maxVelocity.set(30, 10000);
 		game.camera.follow(mummy);
 		
