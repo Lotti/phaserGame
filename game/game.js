@@ -23,16 +23,16 @@ var game = new Phaser.Game(gameWidth, gameHeight, debug ? Phaser.CANVAS : Phaser
 
 var BootState = {
     preload: function() {
-        game.load.image('loading', 'res/textures/loading.png');
+        game.load.image('loadingBar', 'res/textures/loading.png');
     },
     create: function() {
         game.state.start('preload');
     }
 }
 
-var PreloadState = {
+var LoadingState = {
     preload: function() {
-        loadingBar = game.add.sprite(0, 0, 'loading');
+        loadingBar = game.add.sprite(0, 0, 'loadingBar');
         // Center the preload bar
         loadingBar.x = game.world.centerX - loadingBar.width / 2;
         loadingBar.y = game.world.centerY - loadingBar.height / 2;
@@ -63,11 +63,13 @@ var GameState = {
 				
 		background = game.add.tileSprite(0, 0, game.world.width, game.world.height, 'soil');
 		background.fixedToCamera = true;
-		
+		        
 		gems = game.add.group();
 		platforms = game.add.group();
 		rocks = game.add.group();		
-				
+		
+        this.text();        
+        
 		mummy = game.add.sprite(0, game.world.height - block.height*6, 'mummy');
 		mummy.name = 'mummy';
 		mummy.lifes = 3;
@@ -88,35 +90,7 @@ var GameState = {
 		mummy.body.maxVelocity.set(30, 10000);
 		game.camera.follow(mummy);
 		
-		drawPlatform(game, block, platformData[0], game.world.height - block.height*6);
-				
-		//if (debug) {
-			game.time.advancedTiming = true;
-			fps = game.add.text(5, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
-			fps.fixedToCamera = true;
-			fps.update = function() {
-				fps.setText(game.time.fps+' fps');
-			}
-		//}
-		
-		message = game.add.text(game.world.width*.4, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
-		message.update = function() {
-			var t = 'lives: ';
-			for(var i = 0; i<mummy.lifes; i++) {
-				t+= '*';
-			}
-			message.setText(t);
-		}
-		message.fixedToCamera = true;
-		
-		points = game.add.text(game.world.width-5, 2.5, '0 points', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
-		points.fixedToCamera = true;
-		points.p = 0;
-		points.update = function() {
-			points.pivot.x = points.width;
-			points.pivot.y = 0;		
-			points.setText(points.p+' points');
-		}		
+		drawPlatform(game, block, platformData[0], game.world.height - block.height*6);				
 	},
 	update: function() {
 		if (gameover) {
@@ -176,9 +150,6 @@ var GameState = {
 							}
 						}
 					}
-				}
-				else {
-					console.log("mummy or other undefined");
 				}				
 			});
 			
@@ -201,15 +172,12 @@ var GameState = {
 						rock.particles.x = rock.x;
     					rock.particles.y = rock.y;
 						rock.particles.start(true, 2000, null, 4);
-						rock.scale.setTo(r.scale.x*0.8,r.scale.y*0.8);
+						rock.scale.setTo(rock.scale.x*0.8,rock.scale.y*0.8);
                         rock.lifes--;
 						if (rock.lifes == 0) {
 							rock.kill();
 						}
 					}
-				}
-				else {
-					console.log("rock or other undefined");
 				}
 			});
             
@@ -231,13 +199,13 @@ var GameState = {
 							
 			if (clickOnLeft || game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
 				mummy.animations.play("walk",mummy.animationSpeed);
-				mummy.scale.x = -Math.abs(mummy.scale.x);
+				mummy.scale.x = -Math.abs(mummy.scale.x); //flip the sprite
 				
 				mummy.body.velocity.x-= mummy.walkSpeed;
 			}
 			else if (clickOnRight || game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
 				mummy.animations.play("walk",mummy.animationSpeed);
-				mummy.scale.x = Math.abs(mummy.scale.x);
+				mummy.scale.x = Math.abs(mummy.scale.x); //undo sprite flipping
 				
 				mummy.body.velocity.x+= mummy.walkSpeed;
 			}
@@ -292,6 +260,13 @@ var GameState = {
 			}
 		});
 		
+        //cleaning routines (remove upper gems)
+		gems.forEachExists(function (e) {
+			if (e != undefined && !e.inCamera && e.y+block.height < game.camera.y*1.5) {
+				e.kill();
+			}
+		});    
+        
 		gems.forEach(function(e) {
 			if (e != undefined) {
 				if (!e.exists) {
@@ -319,7 +294,7 @@ var GameState = {
 					e.destroy();
 				}
 			}
-		});			
+		});
 	},	
 	restart: function() {
 		started = false;
@@ -328,12 +303,41 @@ var GameState = {
 		jumpPressed = false;
 		
 		game.state.start("game",true,false);
-	}	
+	},
+    text: function() {
+		//if (debug) {
+			game.time.advancedTiming = true;
+			fps = game.add.text(5, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
+			fps.fixedToCamera = true;
+			fps.update = function() {
+				fps.setText(game.time.fps+' fps');
+			}
+		//}
+		
+		message = game.add.text(game.world.width*.4, 2.5, '', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
+		message.update = function() {
+			var t = 'lives: ';
+			for(var i = 0; i<mummy.lifes; i++) {
+				t+= '*';
+			}
+			message.setText(t);
+		}
+		message.fixedToCamera = true;
+		
+		points = game.add.text(game.world.width-5, 2.5, '0 points', { font: '20px Verdana', fill: '#FFFFFF', align: 'left' });
+		points.fixedToCamera = true;
+		points.p = 0;
+		points.update = function() {
+			points.pivot.x = points.width;
+			points.pivot.y = 0;		
+			points.setText(points.p+' points');
+		}		
+    }
 }
 
 
 game.state.add("boot", BootState, true);
-game.state.add("preload", PreloadState, false);
+game.state.add("preload", LoadingState, false);
 game.state.add("game", GameState, false);
 
 window.onkeypress = function(e) {
