@@ -342,6 +342,6 @@ game.state.add("game", GameState, false);
 
 window.onkeypress = function(e) {
 	if (e.keyCode == 114) {
-		game.state.start("game");
+		game.state.start("game",true,false);
 	}
 };
