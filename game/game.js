@@ -88,6 +88,7 @@ var GameState = {
 		mummy.body.collideWorldBounds = true;
 		mummy.body.drag.setTo(1,1);
 		mummy.body.maxVelocity.set(30, 10000);
+        
 		game.camera.follow(mummy);
 		
 		drawPlatform(game, block, platformData[0], game.world.height - block.height*6);				
@@ -174,7 +175,7 @@ var GameState = {
 						rock.particles.start(true, 2000, null, 4);
 						rock.scale.setTo(rock.scale.x*0.8,rock.scale.y*0.8);
                         rock.lifes--;
-						if (rock.lifes == 0) {
+						if (rock.lifes <= 0) {
 							rock.kill();
 						}
 					}
