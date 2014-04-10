@@ -78,15 +78,16 @@ var GameState = {
 		mummy.animationSpeed = 15;
 		mummy.walkSpeed = 5;
 		mummy.jumpSpeed = 150;
+        
+        //Here we add a new animation called 'walk'
+        //Because we didn't give any other parameters it's going to make an animation from all available frames in the 'mummy' sprite sheet
 		mummy.animations.add('walk');
         
     	game.physics.arcade.enable(mummy);
-		mummy.scale.setTo(1,1);
 		mummy.anchor.setTo(.5,.5);
         mummy.body.bounce.y = 0.05;
 		mummy.body.setSize(mummy.width*0.5,mummy.height,0,0);
 		mummy.body.collideWorldBounds = true;
-		mummy.body.drag.setTo(1,1);
 		mummy.body.maxVelocity.set(30, 10000);
         
 		game.camera.follow(mummy);
@@ -182,6 +183,8 @@ var GameState = {
 				}
 			});
             
+            
+            //user input!
             var clickOnLeft = false;
             var clickOnRight = false;
             var clickOnTop = false;
@@ -223,7 +226,7 @@ var GameState = {
 			
 			if (!game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
 				jumpPressed = false;
-			}			
+            }
 
 			//load next platforms!
 			if (mummy.body.y+mummy.body.height > game.world.height - block.height*7) {
