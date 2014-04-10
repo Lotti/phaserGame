@@ -68,7 +68,7 @@ var GameState = {
 		platforms = game.add.group();
 		rocks = game.add.group();		
 		
-        this.text();        
+        this.text();    
         
 		mummy = game.add.sprite(0, game.world.height - block.height*6, 'mummy');
 		mummy.name = 'mummy';
@@ -114,7 +114,7 @@ var GameState = {
 				e.body.immovable = true;	
 			});
 			
-			if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
+			if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR) || game.input.activePointer.isDown) {
 				this.restart();
 			}
 		}
